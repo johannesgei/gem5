@@ -9,5 +9,4 @@ class PIMMemCtrl(MemCtrl):
     cxx_class = "gem5::memory::PIMMemCtrl"
 
     # You can add custom parameters here later
-    pim_latency = Param.Latency("1ns", "Internal PIM processing time")
-    trigger_addr = Param.Addr(0x79000, "Address that triggers PIM operation")
+    pim_base_addr = Param.Addr(0x79000, "Address that triggers PIM operation")

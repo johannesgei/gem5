@@ -1,11 +1,13 @@
 Import('*')
 
-# Register the new SimObject
-# This creates params/PIMMemCtrl.hh header
+# Register the new SimObjects
+# This creates params/PIMMemCtrl.hh and params/PIMDRAMInterface.hh headers
+SimObject('PIMDRAMInterface.py', sim_objects=['PIMDRAMInterface'])
 SimObject('PIMMemCtrl.py', sim_objects=['PIMMemCtrl'])
 
 # This compiles the C++ and links it
+Source('pim_dram_interface.cc')
 Source('pim_mem_ctrl.cc')
 
 # This enables the debug flag if you use DPRINTF(PIM, ...)
-DebugFlag('PIM')
+# DebugFlag('PIM')

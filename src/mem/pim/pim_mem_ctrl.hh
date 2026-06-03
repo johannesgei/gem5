@@ -16,8 +16,15 @@ class PIMMemCtrl : public MemCtrl
     bool recvTimingReq(PacketPtr pkt) override;
 
   protected:
-    // PIM trigger address
-    Addr triggerAddr;
+    // Definition der MMIO-Register (müssen mit pnm_short.h matchen)
+    Addr pimBaseAddr;
+    Addr pimRegSize  = pimBaseAddr + 0x00;
+    Addr pimRegBytes = pimBaseAddr + 0x08;
+    Addr pimRegCmd   = pimBaseAddr + 0x10;
+
+    // Interne Speicherzellen für die abgefangenen Parameter
+    uint64_t storedVectorSize;
+    uint64_t storedElemBytes;
 };
 
 } // namespace memory

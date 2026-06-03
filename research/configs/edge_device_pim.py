@@ -27,6 +27,7 @@ from gem5.simulate.simulator import Simulator
 
 sys.path.append(os.getcwd())
 from m5.objects import PIMMemCtrl
+from m5.objects import PIMDRAMInterface
 
 # 1. Setup Cache Hierarchy
 # Edge devices favor efficiency. 32kB L1s and a 256kB L2 provide a realistic
@@ -72,13 +73,13 @@ board = SimpleBoard(
 )
 
 # full_dram_range = AddrRange("1024MiB")
-board.memory.mem_ctrl = PIMMemCtrl(trigger_addr=0x79000)
+board.memory.mem_ctrl = PIMMemCtrl(pim_base_addr=0x79000)
 board.memory.mem_ctrl.dram = LPDDR5_6400_1x16_BG_BL32()
 
 # 5. Define Workload & Custom Mapping
 # board.set_se_binary_workload(BinaryResource(local_path=os.path.join(os.getcwd(), "research/benchmarks/qr/trace_test")))
 
-binary_path = os.path.join(os.getcwd(), "research/benchmarks/trace_test")
+binary_path = os.path.join(os.getcwd(), "research/benchmarks/pim_functional/main")
 binary_resource = BinaryResource(local_path=binary_path)
 board.set_se_binary_workload(binary_resource)
 
