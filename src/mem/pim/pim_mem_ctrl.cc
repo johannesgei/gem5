@@ -1,5 +1,6 @@
 #include "mem/pim/pim_mem_ctrl.hh"
 #include "mem/pim/pim_dram_interface.hh"
+#include "mem/dram_interface.hh"
 
 #include "base/logging.hh"
 #include "base/trace.hh"
@@ -24,43 +25,35 @@ PIMMemCtrl::recvTimingReq(PacketPtr pkt) {
     if (pkt->isWrite()) {
         Addr addr = pkt->getAddr();
 
-        // warn("[DIAGNOSE] Schreibzugriff auf physische Adresse: 0x%lx (Größe: %d)", 
-        //      addr, pkt->getSize());
-
-
-
-        // uint64_t data_val = 0;
-        
-        // // Sicherstellen, dass das Paket Daten enthält und die Größe passt
-        // if (pkt->getSize() == 8 && pkt->hasData()) {
-        //     data_val = *(pkt->getConstPtr<uint64_t>());
-            
-        //     // Wenn der geschriebene Wert exakt 1 ist (dein Signal!)
-        //     if (data_val == 1) {
-        //         warn("[SPEICHER_DETEKTOR] Signal '1' abgefangen! Physische Zieladresse im Bus ist: 0x%lx", pkt->getAddr());
-        //     }
-        // }
-
-
-
         // if(addr == pimBaseAddr) {
         //     warn("[PIMMemCtrl] MMIO-Zugriff auf Basisadresse 0x%lx erkannt!", addr);
         // }
-        
+
 
         if (addr == pimRegSize) {
             storedVectorSize = *(pkt->getConstPtr<uint64_t>());
             warn("--> [PIMMemCtrl] REG_SIZE empfangen! Wert: %lu", storedVectorSize);
-        } 
+        }
         else if (addr == pimRegBytes) {
             storedElemBytes = *(pkt->getConstPtr<uint64_t>());
             warn("--> [PIMMemCtrl] REG_ELEM_BYTES empfangen! Wert: %lu", storedElemBytes);
-        } 
+        }
         else if (addr == pimRegCmd) {
             uint64_t cmd = *(pkt->getConstPtr<uint64_t>());
-            warn("--> [PIMMemCtrl] REG_COMMAND empfangen! Befehl: %lu", cmd);
-            warn("    [STATUS] Aktuelles Setup: N = %lu, Bytes/Element = %lu", 
-                 storedVectorSize, storedElemBytes);
+            warn("--> [PIMMemCtrl] REG_COMMAND empfangen! Befehl: %lu. Leite an PIMDRAMInterface weiter", cmd);
+            // warn("    [STATUS] Aktuelles Setup: N = %lu, Bytes/Element = %lu",
+            //      storedVectorSize, storedElemBytes);
+
+            // Da dram ein Vektor aus DRAMInterface* ist, holen wir uns Kanal 0
+            // und casten ihn dynamisch auf unser neues PIMDRAMInterface
+            auto pimDram = dynamic_cast<PIMDRAMInterface*>(&dram[0]);
+
+            if (pimDram) {
+                // Hier passiert die Magie: Der Funktionsaufruf im Interface!
+                pimDram->printPIMParameters(storedVectorSize, storedElemBytes, cmd);
+            } else {
+                fatal("Fehler: Das zugewiesene DRAM-Interface ist kein PIMDRAMInterface!");
+            }
         }
     }
 
