@@ -82,16 +82,16 @@ PIMDRAMInterface::calculatePIMLatency(uint64_t vectorSize, uint64_t elemBytes)
 
     // Diagnose-Ausgabe auf dem Terminal
     warn("=============== [PIM LATENCY SIMULATION] ===============");
-    warn("--> tClock der Speicher-Logik:  %lu Ticks", tCK);
-    warn("--> Berechnetes tLogic (MUL+ADD):%lu Ticks pro Element", tLogic);
-    warn("--> Elemente pro Bank-Group:     %lu", elems_per_bg);
-    warn("--> Benötigte Zeilenwechsel:     %lu", rows_needed);
-    warn("--> Strafzeit für Zeilenwechsel: %lu Ticks", row_change_overhead);
-    warn("                                =%lu ms", row_change_overhead / global_freq * 1e3);
-    warn("--> Reine Berechnungszeit:       %lu Ticks", total_logic_time);
-    warn("                                =%lu ms", total_logic_time / global_freq * 1e3);
-    warn("==> PIM-GESAMTLATENZ:            %lu Ticks", total_latency);
-    warn("                                =%lu ms", total_latency / global_freq * 1e3);
+    warn("--> tClock der Speicher-Logik:    %lu Ticks", tCK);
+    warn("--> Berechnetes tLogic (MUL+ADD): %lu Ticks pro Element", tLogic);
+    warn("--> Elemente pro Bank-Group:      %lu", elems_per_bg);
+    warn("--> Benötigte Zeilenwechsel:      %lu", rows_needed);
+    warn("--> Strafzeit für Zeilenwechsel:  %lu Ticks", row_change_overhead);
+    warn("                                = %lu ms", row_change_overhead / global_freq * 1e3);
+    warn("--> Reine Berechnungszeit:        %lu Ticks", total_logic_time);
+    warn("                                = %lu ms", total_logic_time / global_freq * 1e3);
+    warn("==> PIM-GESAMTLATENZ:             %lu Ticks", total_latency);
+    warn("                                = %lu ms", total_latency / global_freq * 1e3);
     warn("========================================================");
 
     return total_latency;

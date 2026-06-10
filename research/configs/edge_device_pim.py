@@ -29,6 +29,7 @@ sys.path.append(os.getcwd())
 from m5.objects import (
     PIMDRAMInterface,
     PIMMemCtrl,
+    Process
 )
 
 # Wir erstellen eine Python-Klasse, die alle physikalischen Timings von LPDDR5 erbt,
@@ -86,18 +87,46 @@ board.memory.mem_ctrl = PIMMemCtrl(pim_base_addr=0x79000)
 # board.memory.mem_ctrl.dram = LPDDR5_6400_1x16_BG_BL32()
 board.memory.mem_ctrl.dram = PIM_LPDDR5()
 
-# 5. Define Workload
-binary_path = os.path.join(
-    os.getcwd(), "research/benchmarks/pim_functional/main"
-)
-binary_resource = BinaryResource(local_path=binary_path)
-board.set_se_binary_workload(binary_resource)
+# # 5. Define Workload
+# binary_path = os.path.join(
+#     os.getcwd(), "research/benchmarks/pim_functional/main"
+# )
+# binary_resource = BinaryResource(local_path=binary_path)
+# board.set_se_binary_workload(binary_resource)
+
+# ==============================================================================
+# 5. Define Workload with Dynamic Arguments
+# ==============================================================================
+# Erwarteter Aufruf: gem5.opt edge_device_pim.py <Pfad_zum_Binary> <N> <ELEMENT_SIZE>
+args = [a for a in sys.argv[1:] if not a.startswith('--')]
+if len(args) < 3:
+    print("Fehler: Zu wenige Argumente übergeben!")
+    print("Nutzung: gem5.opt edge_device_pim.py <binary_path> <N> <elem_size>")
+    sys.exit(1)
+
+binary_path = args[0]
+vector_size = args[1]
+element_size = args[2]
+
+binary = BinaryResource(local_path=binary_path)
+board.set_se_binary_workload(binary)
+
+pim_process = Process()
+pim_process.executable = binary.get_local_path()
+pim_process.cmd = [binary.get_local_path(), vector_size, element_size]
+
+for core in processor.get_cores():
+    core.core.workload = [pim_process]
 
 # 6. Run Simulation
 simulator = Simulator(board=board)
 
+print("==================================================================")
 print("Starting 6G-Edge PIM Simulation...")
-print("Architecture: RISC-V MinorCPU + LPDDR5-6400 (Bank Groups enabled)")
+print("Architecture: RISC-V MinorCPU + LPDDR5-6400 (BGA-NMP mode)")
+print(f"Executing Binary: {binary_path}")
+print(f"Passing to CPU  -> N: {vector_size}, ELEMENT_SIZE: {element_size}")
+print("==================================================================")
 
 simulator.run()
 
