@@ -51,6 +51,7 @@ PIMMemCtrl::recvTimingReq(PacketPtr pkt) {
             if (pimDram) {
                 // Hier passiert die Magie: Der Funktionsaufruf im Interface!
                 pimDram->printPIMParameters(storedVectorSize, storedElemBytes, cmd);
+                Tick calculated_delay = pimDram->calculatePIMLatency(storedVectorSize, storedElemBytes);
             } else {
                 fatal("Fehler: Das zugewiesene DRAM-Interface ist kein PIMDRAMInterface!");
             }

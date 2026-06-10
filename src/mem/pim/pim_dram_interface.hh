@@ -12,9 +12,9 @@ class PIMDRAMInterface : public DRAMInterface
   public:
     PIMDRAMInterface(const PIMDRAMInterfaceParams &p);
 
-    // Tick calculatePIMLatency(uint64_t vectorSize, uint64_t elemBytes);
-
     void printPIMParameters(uint64_t size, uint64_t bytes, uint64_t cmd);
+
+    Tick calculatePIMLatency(uint64_t vectorSize, uint64_t elemBytes);
 };
 
 } // namespace memory

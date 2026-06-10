@@ -86,9 +86,7 @@ board.memory.mem_ctrl = PIMMemCtrl(pim_base_addr=0x79000)
 # board.memory.mem_ctrl.dram = LPDDR5_6400_1x16_BG_BL32()
 board.memory.mem_ctrl.dram = PIM_LPDDR5()
 
-# 5. Define Workload & Custom Mapping
-# board.set_se_binary_workload(BinaryResource(local_path=os.path.join(os.getcwd(), "research/benchmarks/qr/trace_test")))
-
+# 5. Define Workload
 binary_path = os.path.join(
     os.getcwd(), "research/benchmarks/pim_functional/main"
 )
