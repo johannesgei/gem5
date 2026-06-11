@@ -8,7 +8,11 @@ namespace gem5 {
 namespace memory {
 
 PIMDRAMInterface::PIMDRAMInterface(const PIMDRAMInterfaceParams &p) :
-    DRAMInterface(p)
+    DRAMInterface(p),
+    pimEvent(*this),
+    pimVectorSize(0),
+    pimElementBytes(0),
+    pimProcessing(false)
 {
     // Leer
 }
@@ -22,14 +26,10 @@ PIMDRAMInterface::printPIMParameters(uint64_t size, uint64_t bytes, uint64_t cmd
     warn("--> Übergebene Element-Bytes:   %lu", bytes);
     warn("--> Übergebener Befehl (Cmd):   %lu", cmd);
     warn("========================================================");
-
     warn("[LPDDR5 HARDWARE-PARAMETER AUSGELESEN]:");
 
-    // HIER PASSIERT DIE MAGIE: 
-    // Wir casten den universellen _params-Pointer auf deine spezifischen PIM-DRAM-Parameter.
     auto my_params = static_cast<const PIMDRAMInterfaceParams*>(&_params);
 
-    // Jetzt nutzen wir die exakten Variablennamen aus der Python-Generierung (Snake_Case)
     unsigned b_per_rank  = my_params->banks_per_rank;
     unsigned bg_per_rank = my_params->bank_groups_per_rank;
 
@@ -45,11 +45,11 @@ PIMDRAMInterface::printPIMParameters(uint64_t size, uint64_t bytes, uint64_t cmd
 }
 
 Tick
-PIMDRAMInterface::calculatePIMLatency(uint64_t vectorSize, uint64_t elemBytes)
+PIMDRAMInterface::calculatePIMLatency(uint64_t vectorSize, uint64_t elemBytes) const
 {
     auto my_params = static_cast<const PIMDRAMInterfaceParams*>(&_params);
 
-    // 1. Logik-Zyklen in gem5 Ticks umrechnen (clockPeriod() liefert tClock)
+    // 1. Logik-Zyklen in gem5 Ticks umrechnen
     Tick tCK = my_params->tCK;
     Tick tMUL = 5 * tCK;
     Tick tADD = 2 * tCK;
@@ -57,21 +57,14 @@ PIMDRAMInterface::calculatePIMLatency(uint64_t vectorSize, uint64_t elemBytes)
 
     // 2. Hardware-Architektur bestimmen
     unsigned bg_per_rank = my_params->bank_groups_per_rank;
-    
-    // Zeilengröße (Row Buffer Size) in Bytes ermitteln
-    // Standard für LPDDR5 (meist 2048 oder 4096 Bytes)
     uint64_t row_buffer_size = my_params->device_rowbuffer_size;
-    // uint64_t row_buffer_size = 2048; 
 
     // 3. Verteilung auf die Bank-Groups (Parallelisierung des Vektors)
     uint64_t elems_per_bg = (vectorSize + bg_per_rank - 1) / bg_per_rank;
     uint64_t bytes_per_bg = elems_per_bg * elemBytes;
 
     // 4. Zeilenwechsel-Overhead berechnen
-    // Wie viele Zeilen (Rows) belegt der Vektor-Anteil innerhalb einer Bank-Group?
     uint64_t rows_needed = (bytes_per_bg + row_buffer_size - 1) / row_buffer_size;
-    
-    // Für jede benötigte Zeile fällt einmal das Öffnen (tRCD) und Schließen (tRP) an
     Tick row_change_overhead = rows_needed * (my_params->tRCD + my_params->tRP);
 
     // 5. Gesamtlatenz nach der BGA-NMP Formel zusammenführen
@@ -87,14 +80,59 @@ PIMDRAMInterface::calculatePIMLatency(uint64_t vectorSize, uint64_t elemBytes)
     warn("--> Elemente pro Bank-Group:      %lu", elems_per_bg);
     warn("--> Benötigte Zeilenwechsel:      %lu", rows_needed);
     warn("--> Strafzeit für Zeilenwechsel:  %lu Ticks", row_change_overhead);
-    warn("                                = %lu ms", row_change_overhead / global_freq * 1e3);
+    warn("                                = %.6f ms", row_change_overhead / global_freq * 1e3);
     warn("--> Reine Berechnungszeit:        %lu Ticks", total_logic_time);
-    warn("                                = %lu ms", total_logic_time / global_freq * 1e3);
+    warn("                                = %.6f ms", total_logic_time / global_freq * 1e3);
     warn("==> PIM-GESAMTLATENZ:             %lu Ticks", total_latency);
-    warn("                                = %lu ms", total_latency / global_freq * 1e3);
+    warn("                                = %.6f ms", total_latency / global_freq * 1e3);
     warn("========================================================");
 
     return total_latency;
+}
+
+Tick
+PIMDRAMInterface::triggerPIMExecution(uint64_t size, uint64_t bytes, uint64_t cmd)
+{
+    Tick total_latency = 0;
+
+    // Nur starten, wenn das Kommando stimmt und wir nicht schon mitten im Lauf sind
+    if (cmd == 1 && !pimProcessing) {
+        pimProcessing = true;
+
+        // 1. Hole die reine Berechnungszeit aus der mathematischen Funktion
+        total_latency = calculatePIMLatency(size, bytes);
+
+        // 2. Event-Eintrag absichern und planen
+        if (!pimEvent.scheduled()) {
+            schedule(pimEvent, curTick() + total_latency);
+
+            warn("============= [PIM EVENT SCHEDULED] =============");
+            warn("--> Aktueller Sim-Tick: %lu Ticks", curTick());
+            warn("--> Geplantes Ende bei: %lu Ticks (+%lu)", curTick() + total_latency, total_latency);
+            warn("==================================================");
+        } else {
+            warn("[PIM] Warnung: Event war bereits geplant! Überspringe doppelten Schedule.");
+        }
+    }
+    return curTick() + total_latency;
+}
+
+uint64_t
+PIMDRAMInterface::readPimCommand()
+{
+    // Wenn die PIM-Logik im Hintergrund noch rechnet, gib 1 zurück, ansonsten 0
+    warn("============= [PIM STATUS CHECK] =============");
+    return pimProcessing ? 1 : 0;
+}
+
+void
+PIMDRAMInterface::pimExecutionFinished()
+{
+    pimProcessing = false;
+    
+    warn("============= [PIM EVENT FINISHED] =============");
+    warn("--> PIM-Berechnung im Speicher abgeschlossen bei Tick: %lu", curTick());
+    warn("=================================================");
 }
 
 } // namespace memory

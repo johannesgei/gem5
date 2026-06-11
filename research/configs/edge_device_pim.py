@@ -128,7 +128,13 @@ print(f"Executing Binary: {binary_path}")
 print(f"Passing to CPU  -> N: {vector_size}, ELEMENT_SIZE: {element_size}")
 print("==================================================================")
 
+print("[PYTHON] Setze Statistiken für den reinen PIM-Lauf zurück...")
+m5.stats.reset()
+
 simulator.run()
+
+print("[PYTHON] Simulation beendet. Schreibe isolierte Statistiken...")
+m5.stats.dump()
 
 print(
     "Simulation finished. Check m5out/stats.txt for energy and latency results."

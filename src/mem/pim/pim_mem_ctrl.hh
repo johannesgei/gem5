@@ -14,9 +14,10 @@ class PIMMemCtrl : public MemCtrl
 
     // We override the main function that receives requests
     bool recvTimingReq(PacketPtr pkt) override;
+    // void updateBlockedRead();
 
   protected:
-    // Definition der MMIO-Register (müssen mit pnm_short.h matchen)
+    // Definition der MMIO-Register
     Addr pimBaseAddr;
     Addr pimRegSize  = pimBaseAddr + 0x00;
     Addr pimRegBytes = pimBaseAddr + 0x08;
@@ -25,6 +26,10 @@ class PIMMemCtrl : public MemCtrl
     // Interne Speicherzellen für die abgefangenen Parameter
     uint64_t storedVectorSize;
     uint64_t storedElemBytes;
+
+  private:
+    // PacketPtr blockedResponsePack = nullptr;
+    Tick pimReadyTick = 0;
 };
 
 } // namespace memory

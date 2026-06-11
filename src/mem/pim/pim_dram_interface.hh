@@ -14,7 +14,19 @@ class PIMDRAMInterface : public DRAMInterface
 
     void printPIMParameters(uint64_t size, uint64_t bytes, uint64_t cmd);
 
-    Tick calculatePIMLatency(uint64_t vectorSize, uint64_t elemBytes);
+    Tick calculatePIMLatency(uint64_t vectorSize, uint64_t elemBytes) const;
+
+    Tick triggerPIMExecution(uint64_t size, uint64_t bytes, uint64_t cmd);
+
+    uint64_t readPimCommand();
+
+  private:
+    void pimExecutionFinished();
+    MemberEventWrapper<&PIMDRAMInterface::pimExecutionFinished> pimEvent;
+
+    uint64_t pimVectorSize;
+    uint64_t pimElementBytes;
+    bool pimProcessing;
 };
 
 } // namespace memory
