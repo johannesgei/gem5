@@ -4,6 +4,7 @@ import sys
 import m5
 import m5.objects
 from m5.params.param_types import AddrRange
+from gem5.simulate.exit_event import ExitEvent
 
 from gem5.components.boards.simple_board import SimpleBoard
 from gem5.components.cachehierarchies.classic.no_cache import NoCache
@@ -117,9 +118,14 @@ pim_process.cmd = [binary.get_local_path(), vector_size, element_size]
 
 for core in processor.get_cores():
     core.core.workload = [pim_process]
+    core.core.workload[0].simpoint = True # Aktiviert präzise Hardware-Schranken
 
 # 6. Run Simulation
-simulator = Simulator(board=board)
+simulator = Simulator(board=board,
+                      on_exit_event={
+                        ExitEvent.WORKBEGIN: lambda: m5.stats.dump()
+                    }
+)
 
 print("==================================================================")
 print("Starting 6G-Edge PIM Simulation...")
@@ -128,13 +134,19 @@ print(f"Executing Binary: {binary_path}")
 print(f"Passing to CPU  -> N: {vector_size}, ELEMENT_SIZE: {element_size}")
 print("==================================================================")
 
-print("[PYTHON] Setze Statistiken für den reinen PIM-Lauf zurück...")
-m5.stats.reset()
+print("--- [PYTHON] Starte Simulation (Bootvorgang -> PIM-Kette) ---")
+# Läuft komplett in einem Rutsch durch bis zum regulären Programmende!
+simulator.run() 
 
-simulator.run()
+print("--- [PYTHON] Simulation erfolgreich abgeschlossen! ---")
 
-print("[PYTHON] Simulation beendet. Schreibe isolierte Statistiken...")
-m5.stats.dump()
+# print("[PYTHON] Setze Statistiken für den reinen PIM-Lauf zurück...")
+# m5.stats.reset()
+
+# simulator.run()
+
+# print("[PYTHON] Simulation beendet. Schreibe isolierte Statistiken...")
+# m5.stats.dump()
 
 print(
     "Simulation finished. Check m5out/stats.txt for energy and latency results."

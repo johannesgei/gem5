@@ -14,42 +14,33 @@ namespace memory {
 
 PIMMemCtrl::PIMMemCtrl(const PIMMemCtrlParams &p) :
     MemCtrl(p),
-    // storedVectorSize(0),
-    // storedElemBytes(0),
     pimBaseAddr(p.pim_base_addr) {
 }
 
 bool
 PIMMemCtrl::recvTimingReq(PacketPtr pkt) {
     Addr addr = pkt->getAddr();
-    // Wir reagieren nur auf Schreibzugriffe (STOREs) der CPU
     if (pkt->isWrite()) {
-
-        // if(addr == pimBaseAddr) {
-        //     warn("[PIMMemCtrl] MMIO-Zugriff auf Basisadresse 0x%lx erkannt!", addr);
-        // }
 
         if (addr == pimRegSize) {
             storedVectorSize = *(pkt->getConstPtr<uint64_t>());
-            warn("--> [PIMMemCtrl] REG_SIZE empfangen! Wert: %lu", storedVectorSize);
+            DPRINTF(PIM, "--> [PIMMemCtrl] REG_SIZE empfangen! Wert: %lu\n", storedVectorSize);
         }
         else if (addr == pimRegBytes) {
             storedElemBytes = *(pkt->getConstPtr<uint64_t>());
-            warn("--> [PIMMemCtrl] REG_ELEM_BYTES empfangen! Wert: %lu", storedElemBytes);
+            DPRINTF(PIM, "--> [PIMMemCtrl] REG_ELEM_BYTES empfangen! Wert: %lu\n", storedElemBytes);
         }
         else if (addr == pimRegCmd) {
             uint64_t cmd = *(pkt->getConstPtr<uint64_t>());
-            warn("--> [PIMMemCtrl] REG_COMMAND empfangen! Befehl: %lu. Leite an PIMDRAMInterface weiter", cmd);
+            DPRINTF(PIM, "--> [PIMMemCtrl] REG_COMMAND empfangen! Befehl: %lu. Leite an PIMDRAMInterface weiter.\n", cmd);
 
             auto pimDram = dynamic_cast<PIMDRAMInterface*>(&dram[0]);
 
             if (pimDram) {
                 // Diagnose-Ausgabe
-                pimDram->printPIMParameters(storedVectorSize, storedElemBytes, cmd);
-                // Tick pim_latency = pimDram->calculatePIMLatency(storedVectorSize, storedElemBytes);
-                // warn("--> [PIMMemCtrl] Berechnete PIM-Latenz: %lu Ticks", pim_latency);
+                // pimDram->printPIMParameters(storedVectorSize, storedElemBytes, cmd);
                 pimReadyTick = pimDram->triggerPIMExecution(storedVectorSize, storedElemBytes, cmd);
-                warn("--> [PIMMemCtrl] Hardware wird bei Tick %lu bereit sein.", pimReadyTick);
+                DPRINTF(PIM, "--> [PIMMemCtrl] Hardware wird bei Tick %lu bereit sein.\n", pimReadyTick);
             } else {
                 fatal("Fehler: Das zugewiesene DRAM-Interface ist kein PIMDRAMInterface!");
             }
@@ -57,39 +48,36 @@ PIMMemCtrl::recvTimingReq(PacketPtr pkt) {
     }
 
     if (pkt->isRead() && addr == (pimRegCmd)) {
-        warn("--> [PIMMemCtrl] REG_COMMAND Lese-Zugriff erkannt bei Tick %lu", curTick());
+        DPRINTF(PIM, "--> [PIMMemCtrl] REG_COMMAND Lese-Zugriff erkannt bei Tick %lu\n", curTick());
         uint64_t finished_status = 0;
         pkt->setData((uint8_t*)&finished_status);
         pkt->makeResponse();
         Tick delay = (curTick() < pimReadyTick) ? (pimReadyTick - curTick()) : 0;
 
         if (delay > 0) {
-            warn("--> [PIMMemCtrl] Hardware beschäftigt! CPU schläft für %lu Ticks.", delay);
+            DPRINTF(PIM, "--> [PIMMemCtrl] Hardware beschäftigt! CPU schläft für %lu Ticks.\n", delay);
 
-            // 3. DER TRICK: Ein super simples Einweg-Event (Lambda), das sich selbst zerstört
             auto wakeup_event = new gem5::EventFunctionWrapper(
                 [this, pkt]() { 
-                    warn("--> [PIMMemCtrl] Zeit um! Wecke CPU auf.");
+                    DPRINTF(PIM, "--> [PIMMemCtrl] Zeit um! Wecke CPU auf.\n");
                     this->port.sendTimingResp(pkt); 
                 }, 
                 "PIM_Wakeup_Event"
             );
-
-            // Exakt für den Ziel-Tick einplanen
             schedule(wakeup_event, curTick() + delay);
 
         } else {
             // Falls PIM schon fertig ist, sofort zurückschicken
-            warn("--> [PIMMemCtrl] Hardware bereits fertig.");
-            port.sendTimingResp(pkt);
+            DPRINTF(PIM, "--> [PIMMemCtrl] Hardware bereits fertig.\n");
+
+            auto wakeup_event = new gem5::EventFunctionWrapper(
+                [this, pkt]() { 
+                    this->port.sendTimingResp(pkt); 
+                }, 
+                "PIM_Wakeup_Event"
+            );
+            schedule(wakeup_event, curTick());
         }
-
-        // // Wir holen uns den aktuellen Status (1 oder 0) direkt aus dem Interface
-        // auto pimDram = dynamic_cast<PIMDRAMInterface*>(&dram[0]);
-        // uint64_t current_status = pimDram->readPimCommand();
-        
-        // Daten in das gem5-Paket schreiben, damit die CPU sie empfängt
-
         return true;
     }
 

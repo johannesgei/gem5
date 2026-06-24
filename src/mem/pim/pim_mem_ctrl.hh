@@ -11,10 +11,7 @@ class PIMMemCtrl : public MemCtrl
 {
   public:
     PIMMemCtrl(const PIMMemCtrlParams &p);
-
-    // We override the main function that receives requests
     bool recvTimingReq(PacketPtr pkt) override;
-    // void updateBlockedRead();
 
   protected:
     // Definition der MMIO-Register
@@ -28,7 +25,6 @@ class PIMMemCtrl : public MemCtrl
     uint64_t storedElemBytes;
 
   private:
-    // PacketPtr blockedResponsePack = nullptr;
     Tick pimReadyTick = 0;
 };
 

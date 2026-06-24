@@ -29,17 +29,14 @@ int main(int argc, char* argv[]) {
     // Werte dynamisch in die PIM-Register schreiben
     pim_regs.size       = n_elements;
     pim_regs.elem_bytes = elem_bytes;
-    __sync_synchronize(); // Speicher-Barriere
-
-    pim_regs.command    = 1; // PIM_CMD_AXPY
     __sync_synchronize();
 
-    printf("[CPU] Parameter erfolgreich übermittelt.\n");
+    pim_regs.command    = 1;
+    __sync_synchronize();
 
-    printf("[CPU] Warte auf Hardware-Antwort (Blockierendes Lesen)...\n");
     volatile uint64_t status = pim_regs.command;
 
-    printf("[CPU] PIM fertig (Status: %lu). Beende Programm.\n", status);
+    // printf("[CPU] PIM fertig (Status: %lu). Beende Programm.\n", status);
 
     return 0;
 }
