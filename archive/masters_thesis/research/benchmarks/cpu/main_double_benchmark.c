@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
     uint64_t N = strtoull(argv[1], NULL, 10);
     uint64_t elemBytes = strtoull(argv[2], NULL, 10);
     double alpha = 2.5;
-    
+
     // Speicherallokation im gem5-System
     double* X = (double*)malloc(N * elemBytes);
     double* Y = (double*)malloc(N * elemBytes);

@@ -22,14 +22,17 @@ sys.path.append(os.getcwd())
 from m5.objects import (
     PIMDRAMInterface,
     PIMMemCtrl,
-    Process
+    Process,
 )
+
 
 # Create class that inherits all timings from LPDDR5 and creates PIMDRAMInterface.
 class PIM_LPDDR5(LPDDR5_6400_1x16_BG_BL32):
     def __init__(self):
         super().__init__()
-    type = 'PIMDRAMInterface'
+
+    type = "PIMDRAMInterface"
+
 
 # 1. Setup Cache Hierarchy
 # Edge devices favor efficiency. 32kB L1s and a 256kB L2 provide a realistic
@@ -79,7 +82,7 @@ board.memory.mem_ctrl.dram = PIM_LPDDR5()
 
 # 5. Define Workload
 # Erwarteter Aufruf: gem5.opt edge_device_pim.py <Pfad_zum_Binary> <N> <ELEMENT_SIZE>
-args = [a for a in sys.argv[1:] if not a.startswith('--')]
+args = [a for a in sys.argv[1:] if not a.startswith("--")]
 if len(args) < 3:
     print("Fehler: Zu wenige Argumente übergeben!")
     print("Nutzung: gem5.opt edge_device_pim.py <binary_path> <N> <elem_size>")

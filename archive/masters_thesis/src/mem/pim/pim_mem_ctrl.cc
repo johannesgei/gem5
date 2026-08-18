@@ -58,10 +58,10 @@ PIMMemCtrl::recvTimingReq(PacketPtr pkt) {
             DPRINTF(PIM, "--> [PIMMemCtrl] Hardware beschäftigt! CPU schläft für %lu Ticks.\n", delay);
 
             auto wakeup_event = new gem5::EventFunctionWrapper(
-                [this, pkt]() { 
+                [this, pkt]() {
                     DPRINTF(PIM, "--> [PIMMemCtrl] Zeit um! Wecke CPU auf.\n");
-                    this->port.sendTimingResp(pkt); 
-                }, 
+                    this->port.sendTimingResp(pkt);
+                },
                 "PIM_Wakeup_Event"
             );
             schedule(wakeup_event, curTick() + delay);
@@ -71,9 +71,9 @@ PIMMemCtrl::recvTimingReq(PacketPtr pkt) {
             DPRINTF(PIM, "--> [PIMMemCtrl] Hardware bereits fertig.\n");
 
             auto wakeup_event = new gem5::EventFunctionWrapper(
-                [this, pkt]() { 
-                    this->port.sendTimingResp(pkt); 
-                }, 
+                [this, pkt]() {
+                    this->port.sendTimingResp(pkt);
+                },
                 "PIM_Wakeup_Event"
             );
             schedule(wakeup_event, curTick());

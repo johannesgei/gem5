@@ -66,7 +66,7 @@ while [ ${#PIDS[@]} -gt 0 ]; do
   for PID in "${!PIDS[@]}"; do
     # Prüfen, ob der Prozess mit dieser PID noch existiert
     if ! kill -0 $PID 2>/dev/null; then
-      echo "[FINISHED] Simulation für N=${PIDS[$PID]} (PID: $PID) erfolgreich beendet!" 
+      echo "[FINISHED] Simulation für N=${PIDS[$PID]} (PID: $PID) erfolgreich beendet!"
       unset PIDS[$PID]  # Aus dem Array entfernen
     fi
   done

@@ -22,7 +22,7 @@ sys.path.append(os.getcwd())
 from m5.objects import (
     PIMDRAMInterface,
     PIMMemCtrl,
-    Process
+    Process,
 )
 
 # 1. Setup Cache Hierarchy
@@ -69,10 +69,12 @@ board = SimpleBoard(
 )
 
 # 5. Define Workload
-args = [a for a in sys.argv[1:] if not a.startswith('--')]
+args = [a for a in sys.argv[1:] if not a.startswith("--")]
 if len(args) < 3:
     print("Fehler: Zu wenige Argumente übergeben!")
-    print("Nutzung: gem5.opt edge_device_cpu_nocache.py <binary_path> <N> <elem_size>")
+    print(
+        "Nutzung: gem5.opt edge_device_cpu_nocache.py <binary_path> <N> <elem_size>"
+    )
     sys.exit(1)
 
 binary_path = args[0]

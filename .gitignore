@@ -38,3 +38,29 @@ configs/dram/lowp_sweep.cfg
 .vscode
 typings
 .DS_Store
+
+# ==============================================================================
+# Simulation Output & Run Artifacts
+# ==============================================================================
+
+# Ignore all files inside research results folders by default
+**/research/results/**/*
+# UNIGNORE (keep) all .csv files inside results folders
+!**/research/results/**/*.csv
+
+# Ignore generated benchmark run outputs, statistics, and configuration dumps
+*.ini
+*.json
+*.bib
+*.out
+*.log
+*.dmp
+stats.txt
+config.ini
+config.json
+citations.bib
+
+# Ignore test/benchmark binaries
+test_riscv
+*.o
+*.a

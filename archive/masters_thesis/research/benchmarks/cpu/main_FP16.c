@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
     uint64_t N = strtoull(argv[1], NULL, 10);
     uint64_t elemBytes = strtoull(argv[2], NULL, 10);
     _Float16 alpha = 2.5;
-    
+
     // Speicherallokation im gem5-System
     _Float16* X = (_Float16*)malloc(N * elemBytes);
     _Float16* Y = (_Float16*)malloc(N * elemBytes);
