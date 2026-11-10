@@ -1,0 +1,27 @@
+---
+description: Never edit upstream gem5; extend only via new files and subclasses
+alwaysApply: true
+---
+
+# No upstream gem5 edits
+
+Never edit, rename, or delete files that shipped with upstream gem5.
+
+Never patch `mem_ctrl.cc`, `dram_interface.cc`, existing `SConscript`s, CPU models, or stock `configs/`.
+
+Do add behavior in **new** files (new `.cc`/`.hh`/`.py` plus a new `SConscript`, or under `research/`). Prefer subclassing existing classes.
+
+Keep configs, benchmarks, and eval under `research/`.
+
+If a change truly requires editing an upstream file, stop and ask. Do not patch it.
+
+Exception: files created in this project (`research/**`, `src/mem/pim/**`) may be edited.
+
+```python
+# BAD — editing upstream
+# src/mem/mem_ctrl.cc  +=  pim_hook()
+
+# GOOD — new subclass in a new file
+class PIMMemCtrl(MemCtrl):
+    type = "PIMMemCtrl"
+```
