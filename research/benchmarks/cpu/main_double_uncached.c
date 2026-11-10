@@ -1,6 +1,8 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
+
+#include "kernel_common.h"
 
 int main(int argc, char* argv[]) {
     if (argc < 3) {
@@ -38,11 +40,13 @@ int main(int argc, char* argv[]) {
     free((void*)dummy);
 
     // --- START DER MESSRELEVANTEN ZONE ---
+    roi_begin();
     for (uint64_t i = 0; i < N; i++) {
         Y[i] = alpha * X[i] + Y[i];
         __asm__ __volatile__("" : : "g"(X), "g"(Y) : "memory");
     }
     __asm__ __volatile__("" : : "g"(Y) : "memory");
+    roi_end();
     // --- ENDE DER MESSRELEVANTEN ZONE ---
 
     // if (N > 0) {

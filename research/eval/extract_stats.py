@@ -33,8 +33,20 @@ def flops_for(kernel: str, n: int) -> int:
     raise SystemExit(f"unknown kernel for FLOP formula: {kernel}")
 
 
-def _stat(text: str, name: str) -> float:
-    # Last matching value; ignore comments after '#'.
+def _optional_stat(text: str, name: str) -> float:
+    matches = re.findall(
+        rf"^\S*{re.escape(name)}\s+([0-9.eE+-]+)",
+        text,
+        flags=re.MULTILINE,
+    )
+    if not matches:
+        return 0.0
+    return float(matches[0])
+
+
+def _stat(text: str, name: str, *, first: bool = False) -> float:
+    # With ROI, m5_dump_stats writes an early snapshot; sim exit dumps again.
+    # The first energy dump is the kernel window.
     matches = re.findall(
         rf"^\S*{re.escape(name)}\s+([0-9.eE+-]+)",
         text,
@@ -42,7 +54,7 @@ def _stat(text: str, name: str) -> float:
     )
     if not matches:
         raise SystemExit(f"stat not found: {name}")
-    return float(matches[-1])
+    return float(matches[0] if first else matches[-1])
 
 
 def _energy(text: str, field: str) -> float:
@@ -53,8 +65,12 @@ def _energy(text: str, field: str) -> float:
         flags=re.MULTILINE,
     )
     if ranks:
-        return sum(float(x) for x in ranks)
-    return _stat(text, f"dram.{field}")
+        rank_ids = sorted(
+            set(re.findall(rf"dram\.rank(\d+)\.{re.escape(field)}", text))
+        )
+        first_dump = ranks[: len(rank_ids)] if rank_ids else ranks[:1]
+        return sum(float(x) for x in first_dump)
+    return _stat(text, f"dram.{field}", first=True)
 
 
 def extract(
@@ -69,14 +85,14 @@ def extract(
         "N": n,
         "elem_bytes": elem_bytes,
         "flops": flops,
-        "simSeconds": _stat(text, "simSeconds"),
+        "simSeconds": _stat(text, "simSeconds", first=True),
         "dram_totalEnergy_pJ": total_e,
         "dram_actEnergy_pJ": _energy(text, "actEnergy"),
         "dram_readEnergy_pJ": _energy(text, "readEnergy"),
         "dram_writeEnergy_pJ": _energy(text, "writeEnergy"),
         "dram_refreshEnergy_pJ": _energy(text, "refreshEnergy"),
-        "bytes_read": _stat(text, "dram.bytesRead::total"),
-        "bytes_written": _stat(text, "dram.bytesWritten::total"),
+        "bytes_read": _stat(text, "dram.bytesRead::total", first=True),
+        "bytes_written": _optional_stat(text, "dram.bytesWritten::total"),
         "energy_per_flop": (total_e / flops) if flops else "",
     }
     return row
