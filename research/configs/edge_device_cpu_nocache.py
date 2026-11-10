@@ -6,11 +6,6 @@ from gem5.components.cachehierarchies.classic.no_cache import NoCache
 from gem5.components.cachehierarchies.classic.private_l1_shared_l2_cache_hierarchy import (
     PrivateL1SharedL2CacheHierarchy,
 )
-
-# Import the specific LPDDR5 interface
-from gem5.components.memory.dram_interfaces.lpddr5 import (
-    LPDDR5_6400_1x16_BG_BL32,
-)
 from gem5.components.memory.memory import ChanneledMemory
 from gem5.components.processors.cpu_types import CPUTypes
 from gem5.components.processors.simple_processor import SimpleProcessor
@@ -19,6 +14,8 @@ from gem5.resources.resource import BinaryResource
 from gem5.simulate.simulator import Simulator
 
 sys.path.append(os.getcwd())
+from research.components.lpddr5_idd import LPDDR5_6400_1x16_BG_BL32_IDD
+
 from m5.objects import (
     PIMDRAMInterface,
     PIMMemCtrl,
@@ -45,7 +42,7 @@ cache_hierarchy = NoCache()
 # burst length 32 --> 32 x 16 bit (bus width) = 64 Byte (exactly one cache line)
 # 16 banks per rank; 4 bank groups per rank
 memory = ChanneledMemory(
-    dram_interface_class=LPDDR5_6400_1x16_BG_BL32,
+    dram_interface_class=LPDDR5_6400_1x16_BG_BL32_IDD,
     num_channels=1,
     interleaving_size=128,  # Aligns with cache line size
     size="1024MiB",

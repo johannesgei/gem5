@@ -153,8 +153,9 @@ stale DRAM.
 
 ## 8. Steps to the plots
 
-1. **Freeze the CPU baseline.** One config, all six kernels, `stats.txt` plus
-   DRAM energy. Rank kernels by miss rate and bytes moved.
+1. **Freeze the platform and metrics.** Use the thesis `edge_device_*`
+   configs, not `run_6g_sim_riscv.py`. Contract:
+   [research/eval/STEP1_PLATFORM.md](eval/STEP1_PLATFORM.md).
 2. **Specify the PIM contract.** Commands, physical arguments, layout rule
    (oracle unless we change it).
 3. **Finish latency and energy** on `PIMDRAMInterface` (no upstream edits).
